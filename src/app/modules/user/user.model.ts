@@ -3,7 +3,7 @@ import { Schema, model } from 'mongoose';
 import config from '../../config';
 import { TUser, UserModel } from './user.interface';
 
-const userSchema = new Schema<TUser,UserModel>(
+const userSchema = new Schema<TUser, UserModel>(
   {
     id: {
       type: String,
@@ -13,10 +13,14 @@ const userSchema = new Schema<TUser,UserModel>(
     password: {
       type: String,
       required: true,
+      select: 0,
     },
     needsPasswordChange: {
       type: Boolean,
       default: true,
+    },
+    passwordChangedAt:{
+      type: Date
     },
     role: {
       type: String,
@@ -54,12 +58,14 @@ userSchema.post('save', function (doc, next) {
   next();
 });
 
+userSchema.statics.isUserExistsByCustomId = async function (id: string) {
+  return await User.findOne({ id }).select('+password');
+};
+userSchema.statics.isPasswordMatch = async function (
+  plainTextPassword,
+  hashedPassword,
+) {
+  return await bcrypt.compare(plainTextPassword, hashedPassword);
+};
 
-userSchema.statics.isUserExistsByCustomId = async function(id:string){
- return await User.findOne({ id})
-}
-userSchema.statics.isPasswordMatch = async function(plainTextPassword,hashedPassword){
- return await bcrypt.compare(plainTextPassword,hashedPassword)
-}
-
-export const User = model<TUser,UserModel>('User', userSchema);
+export const User = model<TUser, UserModel>('User', userSchema);
