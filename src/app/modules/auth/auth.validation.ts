@@ -18,8 +18,16 @@ const refreshTokenValidationSchema = z.object({
   }),
 });
 
+const forgetPasswordValidationSchema = z.object({
+  body: z.object({
+    id: z.string({ required_error: 'Old password is require' }),
+  }),
+});
+
+
 export const AuthValidation = {
   loginValidationSchema,
   refreshTokenValidationSchema,
   changePasswordValidationSchema,
+  forgetPasswordValidationSchema
 };
