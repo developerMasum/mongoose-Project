@@ -1,3 +1,4 @@
+import { UserValidation } from './user.validation';
 import express from 'express';
 import validateRequest from '../../middlewares/validateRequest';
 import { createAdminValidationSchema } from '../Admin/admin.validation';
@@ -20,6 +21,11 @@ router.post(
   '/create-faculty',
   validateRequest(createFacultyValidationSchema),
   UserControllers.createFaculty,
+);
+router.post(
+  '/change-status/:id',
+  validateRequest(UserValidation.changeStatusValidationSchema),
+  UserControllers.changeStatus,
 );
 
 router.post(

@@ -18,7 +18,7 @@ import {
   generateFacultyId,
   generateStudentId,
 } from './user.utils';
-import { verifyToken } from '../auth/auth.utils';
+// import { verifyToken } from '../auth/auth.utils';
 
 const createStudentIntoDB = async (password: string, payload: TStudent) => {
   // create a user object
@@ -87,8 +87,8 @@ const createFacultyIntoDB = async (password: string, payload: TFaculty) => {
 
   //set student role
   userData.role = 'faculty';
-    //set student email;
-    userData.email = payload.email;
+  //set student email;
+  userData.email = payload.email;
 
   // find academic department info
   const academicDepartment = await AcademicDepartment.findById(
@@ -145,8 +145,8 @@ const createAdminIntoDB = async (password: string, payload: TAdmin) => {
 
   //set student role
   userData.role = 'admin';
-    //set student email;
-    userData.email = payload.email;
+  //set student email;
+  userData.email = payload.email;
 
   const session = await mongoose.startSession();
 
@@ -184,28 +184,36 @@ const createAdminIntoDB = async (password: string, payload: TAdmin) => {
   }
 };
 
-const getMe = async(userId:string,role:string)=>{
+const getMe = async (userId: string, role: string) => {
   // const decoded = verifyToken(token,config.jwt_access_secret as string)
   // const {userId,role} = decoded;
   // console.log(decoded);
-let result = null;
+  let result = null;
 
-if (role === 'student') {
-  result = await Student.findOne({id:userId}).populate('user')
-}
-if (role === 'admin') {
-  result = await Admin.findOne({id:userId}).populate('user')
-}
-if (role === 'faculty') {
-  result = await Faculty.findOne({id:userId}).populate('user')
-}
-return result ;
-  // const result = await 
-}
+  if (role === 'student') {
+    result = await Student.findOne({ id: userId }).populate('user');
+  }
+  if (role === 'admin') {
+    result = await Admin.findOne({ id: userId }).populate('user');
+  }
+  if (role === 'faculty') {
+    result = await Faculty.findOne({ id: userId }).populate('user');
+  }
+  return result;
+  // const result = await
+};
+
+const changeStatus = async (id: string, payload: { status: string }) => {
+  const result = await User.findByIdAndUpdate(id, payload, {
+    new: true,
+  });
+  return result
+};
 
 export const UserServices = {
   createStudentIntoDB,
   createFacultyIntoDB,
   createAdminIntoDB,
-  getMe
+  getMe,
+  changeStatus,
 };
