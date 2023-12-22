@@ -6,6 +6,7 @@ import AppError from '../../errors/AppError';
 import { User } from '../user/user.model';
 import { TLoginUser } from './auth.interface';
 import { createToken } from './auth.utils';
+import { sendEmail } from '../../utils/sendEmail';
 
 const loginUser = async (payload: TLoginUser) => {
   // checking if the user is exist
@@ -194,17 +195,72 @@ const forgetPassword = async(userId:string)=>{
     role: user.role,
   };
 
-  const accessToken = createToken(
+  const resetToken = createToken(
     jwtPayload,
     config.jwt_access_secret as string,
    '10m'
   );
 
-const resetUILink = `http://localhost:3000?id=${user.id}&token=${accessToken}`
+const resetUILink = `${config.reset_password_ui_link}?id=${user.id}&token=${resetToken}`
+
+sendEmail(user.email,resetUILink)
 
 console.log(resetUILink);
+
+
 }
 
+const resetPassword = async (payload:{id:string,newPassword:string},token:string)=>{
+// checking if the user is exist
+const user = await User.isUserExistsByCustomId(payload?.id);
+
+if (!user) {
+  throw new AppError(httpStatus.NOT_FOUND, 'This user is not found !');
+}
+// checking if the user is already deleted
+
+const isDeleted = user?.isDeleted;
+
+if (isDeleted) {
+  throw new AppError(httpStatus.FORBIDDEN, 'This user is deleted !');
+}
+
+// checking if the user is blocked
+
+const userStatus = user?.status;
+
+if (userStatus === 'blocked') {
+  throw new AppError(httpStatus.FORBIDDEN, 'This user is blocked ! !');
+}
+const decoded = jwt.verify(
+  token,
+  config.jwt_access_secret as string,
+) as JwtPayload;
+
+// console.log(decoded);
+if (decoded?.userId!==payload.id) {
+  throw new AppError(httpStatus.FORBIDDEN,'you are forbidden to access')
+}
+
+  //hash new password
+  const newHashedPassword = await bcrypt.hash(
+    payload.newPassword,
+    Number(config.bcrypt_salt_rounds),
+  );
+
+  await User.findOneAndUpdate(
+    {
+      id: decoded.userId,
+      role: decoded.role,
+    },
+    {
+      password: newHashedPassword,
+      passwordChangedAt: new Date(),
+    },
+  );
+
+
+}
 
 
 
@@ -212,5 +268,6 @@ export const AuthServices = {
   loginUser,
   changePassword,
   refreshToken,
-  forgetPassword
+  forgetPassword,
+  resetPassword
 };
